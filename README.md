@@ -1,7 +1,8 @@
 # aio-connect-example-bot
 
-Пример использования библиотеки [aio-connect](https://github.com/LilKirill00/aio-connect)
+Пример использования пакета [aio-connect](https://github.com/LilKirill00/aio-connect)
 
+## Использование
 Для использования замените данные которые берутся из `config_reader.py` или настройте файл `.env` похожим образом:
 ```dotenv
 # connect
