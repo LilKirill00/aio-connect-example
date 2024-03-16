@@ -14,7 +14,7 @@ router = Router()
 
 
 @router.line(F.text, Navigation.on_main_menu)
-async def response_to_had_a_problem(line: types.TypeLine):
+async def response_to_main_menu(line: types.TypeLine):
     if line.user_id == line.author_id:
         send_text = "Не понимаю, выберите доступные варианты"
         await bot.send_message_line(line_id=line.line_id, user_id=line.user_id, text=send_text)
@@ -155,7 +155,7 @@ async def response_to_documentation(line: types.TypeLine):
 
 
 @router.line(F.text, Navigation.on_applications)
-async def response_to_documentation(line: types.TypeLine):
+async def response_to_applications(line: types.TypeLine):
     if line.user_id == line.author_id:
         send_text = "Не понимаю, выберите доступные варианты"
 

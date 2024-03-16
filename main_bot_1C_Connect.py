@@ -8,8 +8,7 @@ from config_reader import config
 from aio_connect.fsm.storage.memory import MemoryStorage
 from aio_connect import Bot, Dispatcher
 from aio_connect.webhook.aiohttp_server import SimpleRequestHandler, setup_application
-from filters.sent_by_user import SentByUserFilter
-from filters.slowpoke_middleware import SlowpokeMiddleware
+from filters import SentByUserFilter, SlowpokeMiddleware
 
 SERVER_API = config.SERVER_API
 
@@ -26,7 +25,7 @@ LINE_ID = config.LINE_ID
 
 bot = Bot(
     api_login=config.API_LOGIN.get_secret_value(),
-    api_password=config.API_PASSSWORD.get_secret_value(),
+    api_password=config.API_PASSWORD.get_secret_value(),
     line_id=LINE_ID,
     base=SERVER_API
 )

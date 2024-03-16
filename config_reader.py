@@ -5,7 +5,7 @@ from pydantic import SecretStr
 class Settings(BaseSettings):
     # Вместо str использовать SecretStr для конфиденциальных данных
     API_LOGIN: SecretStr
-    API_PASSSWORD: SecretStr
+    API_PASSWORD: SecretStr
 
     SERVER_API: str
 

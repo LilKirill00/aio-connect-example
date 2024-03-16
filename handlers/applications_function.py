@@ -218,7 +218,7 @@ async def create_application_step5(line: TypeLine, state: FSMContext) -> None:
 
 
 @router.line(F.text.in_(["Получение информации о заявке", "Повторить"]), Navigation.on_applications)
-async def get_application_info(line: TypeLine, state: FSMContext) -> None:
+async def get_application_info_start(line: TypeLine, state: FSMContext) -> None:
     if line.user_id == line.author_id:
         await bot.send_message_line(line_id=line.line_id, user_id=line.user_id,
                                     text="Введите номер заявки по которой хотите получить информацию",
@@ -228,14 +228,14 @@ async def get_application_info(line: TypeLine, state: FSMContext) -> None:
 
 @router.line(F.text == "Понятно", Navigation.on_applications)
 @router.line(F.text == "Отменить редактирование", Navigation.on_edit_application_step1)
-async def get_application_info(line: TypeLine, state: FSMContext) -> None:
+async def get_application_info_go_back(line: TypeLine, state: FSMContext) -> None:
     if line.user_id == line.author_id:
         await applications(line, state)
 
 
 def dateformat(date: str) -> datetime:
     # Преобразует дату из формата 2024-02-21T14:54:28Z в формат 21 февраля 2024 14:54:28
-    locale.setlocale(locale.LC_TIME, ('ru_RU', 'UTF-8'))
+    locale.setlocale(locale.LC_TIME, 'ru_RU')
     return datetime.datetime.fromisoformat(date.replace('Z', '+00:00')).strftime('%d %B %Y %H:%M:%S')
 
 
@@ -291,7 +291,7 @@ async def get_application_info(line: TypeLine, state: FSMContext) -> None:
 
 
 @router.line(F.text == "Редактировать заявку", Navigation.on_applications)
-async def edit_application(line: TypeLine, state: FSMContext) -> None:
+async def edit_application_start(line: TypeLine, state: FSMContext) -> None:
     if line.user_id == line.author_id:
         await bot.send_message_line(line_id=line.line_id, user_id=line.user_id,
                                     text="Введите номер заявки информацию о которой хотите отредактировать",
@@ -364,7 +364,7 @@ async def save_edit_application(line: TypeLine, state: FSMContext) -> None:
         send_message += f"Запрос изменения вида работы на: {ticket_update['type']['name']}\n"
     if 'add_message_status' in ticket_update:
         send_message += f"Сообщение по поводу отмены заявки: {ticket_update['add_message_status']}\n"
-    if send_message is not None:
+    if send_message != "":
         response_message = await client.service.ServiceRequestSendTextMessage(
             ServiceRequestID=ticket['id'],
             AuthorID=line.user_id,
@@ -590,7 +590,7 @@ async def on_edit_application_step2_cancel_status(line: TypeLine, state: FSMCont
 @router.line(F.text == "Написать сообщение в заявке", Navigation.on_edit_application_step2_add_message)
 async def on_edit_application_step2_add_message(line: TypeLine, state: FSMContext) -> None:
     if line.user_id == line.author_id:
-        send_text = f"Введите сообщение которое хотите отправить в заявку"
+        send_text = "Введите сообщение которое хотите отправить в заявку"
         keyboard = [[Button(text="Назад")]]
         await bot.send_message_line(line_id=line.line_id, user_id=line.user_id, text=send_text, keyboard=keyboard)
         await state.set_state(Navigation.on_edit_application_step3_add_message)

@@ -7,7 +7,7 @@
 ```dotenv
 # connect
 API_LOGIN=__login__
-API_PASSSWORD=__password__
+API_PASSWORD=__password__
 
 SERVER_API="https://__server URL__"
 
