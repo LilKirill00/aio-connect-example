@@ -10,7 +10,7 @@ from states_group.navigation import Navigation
 router = Router()
 
 
-@router.line(Command("help", prefix="/"))
+@router.line(Command("help", prefix="/"))  # /help
 async def help_bot(line: TypeLine):
     await bot.send_message_line(line_id=line.line_id, user_id=line.user_id,
                                 text="Здравствуйте!\nВас приветствует чат бот. Чтобы не возникали проблем рекомендую "

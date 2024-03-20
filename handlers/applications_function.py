@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import locale
 
@@ -10,6 +11,7 @@ from main_bot_1C_Connect import bot
 from handlers.navigation_menu import applications
 from states_group.navigation import Navigation
 
+# библиотеки для взаимодействия с SOAP-BOT-API
 import zeep
 from zeep.transports import AsyncTransport
 import httpx
@@ -22,11 +24,14 @@ ServiceRequestStatusID = {}
 
 
 async def set_application_info_lists() -> None:
+    """Функция прогрузки свежих данных которые используется во время формирования заявки
+    :return: None
+    """
     transport = AsyncTransport(client=httpx.AsyncClient(auth=(bot.api_login, bot.api_password)),
                                wsdl_client=httpx.Client(auth=(bot.api_login, bot.api_password)))
-
     client = zeep.AsyncClient("https://tusdevelop.1c-connect.com/tusdevelop/ws/PartnerWebAPI2?wsdl",
                               transport=transport)
+
     # Получаем и переоформляем список услуг
     service_kind = await client.service.ServiceKindRead(Params=[])
     service_kind = service_kind[1]['Value']
@@ -36,6 +41,7 @@ async def set_application_info_lists() -> None:
         for _id in range(0, len(column_name)):
             row.update({column_name[_id]: value['Value'][_id]})
         service_kind_list.append(row)
+
     # Получаем и переоформляем список видов работ
     service_request_type = await client.service.ServiceRequestTypeRead(Params=[])
     service_request_type = service_request_type[1]['Value']
@@ -45,6 +51,7 @@ async def set_application_info_lists() -> None:
         for _id in range(0, len(column_name)):
             row.update({column_name[_id]: value['Value'][_id]})
         service_request_type_list.append(row)
+
     # Получаем и переоформляем список статусов
     service_request_status = await client.service.ServiceRequestStatusRead(Params=[])
     service_request_status = service_request_status[1]['Value']
@@ -54,6 +61,7 @@ async def set_application_info_lists() -> None:
         for _id in range(0, len(column_name)):
             row.update({column_name[_id]: value['Value'][_id]})
         service_request_status_list.append(row)
+
     # Переоформляем список статусов для удобного взаимодействия
     for value in service_request_status_list:
         if not value['Deleted']:
@@ -72,10 +80,10 @@ async def do_create_application(line: TypeLine, state: FSMContext) -> None:
     ticket = (await state.get_data())['ticket']
     transport = AsyncTransport(client=httpx.AsyncClient(auth=(bot.api_login, bot.api_password)),
                                wsdl_client=httpx.Client(auth=(bot.api_login, bot.api_password)))
-
     client = zeep.AsyncClient("https://tusdevelop.1c-connect.com/tusdevelop/ws/PartnerWebAPI2?wsdl",
                               transport=transport)
 
+    # Получаем структуру soap по которой надо заполнять данные
     structure = client.get_type('ns0:Structure')
     from config_reader import config
     params = structure(Property=[
@@ -92,11 +100,29 @@ async def do_create_application(line: TypeLine, state: FSMContext) -> None:
     response = await client.service.ServiceRequestAdd(Params=[params])
     if response[0]['Value'] == "SUCCESS":
         await bot.send_message_line(line_id=line.line_id, user_id=line.user_id,
-                                    text="По вашим данным зарегистрирована заявка, вы сможете видеть ход ее "
-                                         "рассмотрения в приложении. Кнопка “Понятно” = возврат в меню.",
-                                    keyboard=[
-                                        [{"text": "Понятно"}]
-                                    ])
+                                    text="Регистрируется заявка. Подождите немного")
+
+        timer = 0  # счетчик который дает время заяве загрузиться
+        while timer < 60:
+            try:
+                # ждем пока загрузится заявка
+                ticket_send = await bot.get_ticket(response[1]['Value']['Property'][0]['Value'])
+                await bot.send_message_line(line_id=line.line_id, user_id=line.user_id,
+                                            text="По вашим данным зарегистрирована заявка, вы сможете видеть ход ее "
+                                                 "рассмотрения в приложении. Кнопка “Понятно” = возврат в меню.",
+                                            keyboard=[
+                                                [Button(text="Распечатать")],
+                                                [Button(text="Понятно")],
+                                            ])
+                await state.update_data(print_template={"where": 'create_info', 'ticket': ticket_send})
+                break
+            except ConnectNotFound:
+                await asyncio.sleep(1)
+                timer += 1
+        else:
+            await bot.send_message_line(line_id=line.line_id, user_id=line.user_id,
+                                        text="Время ожидания заявки истекло")
+
         await state.set_state(Navigation.on_applications)
     else:
         await bot.send_message_line(line_id=line.line_id, user_id=line.user_id, text="Ошибка сохранения изменений")
@@ -121,7 +147,7 @@ async def create_application(line: TypeLine, state: FSMContext) -> None:
 @router.line(F.text == "Отмена", Navigation.on_create_application_step5)
 async def stop_create_application(line: TypeLine, state: FSMContext) -> None:
     if line.user_id == line.author_id:
-        await state.update_data(ticket={})
+        await state.update_data(ticket={})  # Очистить данные в ticket
         await applications(line, state)
 
 
@@ -234,8 +260,24 @@ async def get_application_info_go_back(line: TypeLine, state: FSMContext) -> Non
 
 
 def dateformat(date: str) -> datetime:
-    # Преобразует дату из формата 2024-02-21T14:54:28Z в формат 21 февраля 2024 14:54:28
-    locale.setlocale(locale.LC_TIME, 'ru_RU')
+    """Преобразует дату из формата '2024-02-21T14:54:28Z' в формат '21 февраля 2024 14:54:28'
+
+    :param date: дата в формате '2024-02-21T14:54:28Z'
+    :return: datetime
+    """
+    try:
+        # Пытаемся установить русскую локаль
+        locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')  # Для Linux
+    except locale.Error:
+        try:
+            # Вторая попытка, уже с учетом особенностей Windows
+            locale.setlocale(locale.LC_TIME, 'Russian')  # Для Windows
+        except locale.Error as e:
+            # Если и это не получается, выводим сообщение об ошибке.
+            # Программа будет использовать стандартную локаль,
+            # и может не корректно выводить названия месяцев на русском.
+            print(f"Ошибка установки локали: {e}")
+            locale.setlocale(locale.LC_TIME, 'C')
     return datetime.datetime.fromisoformat(date.replace('Z', '+00:00')).strftime('%d %B %Y %H:%M:%S')
 
 
@@ -286,7 +328,11 @@ async def get_application_info(line: TypeLine, state: FSMContext) -> None:
                       f"Услуга: {ticket['kind']['name']}\n"
                       f"Вид работ: {ticket['type']['name']}\n"
                       f"Результат: {ticket['result'] if 'result' in ticket else ''}\n"),
-                keyboard=[[Button(text="Повторить"), Button(text="Понятно")]])
+                keyboard=[
+                    [Button(text="Повторить"), Button(text="Распечатать")],
+                    [Button(text="Понятно")],
+                ])
+            await state.update_data(print_template={"where": 'get_info', 'ticket': ticket})
             await state.set_state(Navigation.on_applications)
 
 
@@ -376,7 +422,8 @@ async def save_edit_application(line: TypeLine, state: FSMContext) -> None:
             await bot.send_message_line(line_id=line.line_id, user_id=line.user_id, text="Ошибка отправки сообщения\n")
     if response[0]['Value'] == "SUCCESS":
         await bot.send_message_line(line_id=line.line_id, user_id=line.user_id, text="Изменения в заявке сохранены\n",
-                                    keyboard=[[Button(text="Понятно")]])
+                                    keyboard=[[Button(text="Распечатать")], [Button(text="Понятно")]])
+        await state.update_data(print_template={"where": 'edit_info', 'ticket': ticket, 'ticket_update': ticket_update})
         await state.set_state(Navigation.on_applications)
     else:
         await bot.send_message_line(line_id=line.line_id, user_id=line.user_id, text="Ошибка сохранения изменений\n")

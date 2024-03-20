@@ -34,6 +34,7 @@ bot = Bot(
 async def on_startup():
     from handlers.applications_function import set_application_info_lists
     await bot.set_hook(type=HookType.BOT, id=LINE_ID, url=BASE_WEBHOOK_URL + WEBHOOK_PATH + LINE_ID)
+
     await set_application_info_lists()
 
 
@@ -43,7 +44,8 @@ async def on_shutdown():
 
 def main() -> None:
     from handlers import (
-        navigation_menu, navigation_function, register_of_application, applications_function, response_to
+        navigation_menu, navigation_function, register_of_application, applications_function, create_docx_by_template,
+        response_to
     )
     from aio_connect.fsm.storage.memory import SimpleEventIsolation
     dp = Dispatcher(storage=MemoryStorage(), events_isolation=SimpleEventIsolation())
@@ -53,6 +55,7 @@ def main() -> None:
 
         register_of_application.router,
         applications_function.router,
+        create_docx_by_template.router,
 
         response_to.router,
     )

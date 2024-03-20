@@ -49,7 +49,7 @@ async def response_to_had_a_problem(line: types.TypeLine):
         if send_file:
             await bot.send_file_line(line_id=line.line_id, user_id=line.user_id,
                                      file_name="Файл архив с компонентами УД.zip",
-                                     file=FSInputFile("./uploads/Файл архив с компонентами УД.zip"))
+                                     file=FSInputFile("./uploads/permanent/Файл архив с компонентами УД.zip"))
 
 
 @router.line(F.text, Navigation.on_faq)
