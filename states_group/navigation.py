@@ -43,6 +43,6 @@ class Navigation(StatesGroup):
     on_create_application_step4 = State()  # Вид работы -
     on_create_application_step5 = State()  # Регистрация
 
-    # Меню - Заявки - ... - Распечатать -
-    on_select_print_template = State()  # Выбор какой вид печати будет происходить
-    on_select_file_template = State()  # Печать по шаблону пользователя
+    # Меню - Заявки - ... - Сформировать отчет -
+    on_select_print_template = State()  # Выбор какой вид формирования будет происходить
+    on_select_file_template = State()  # Формирование по шаблону пользователя
