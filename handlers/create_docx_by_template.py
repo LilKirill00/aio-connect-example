@@ -31,7 +31,7 @@ async def help_template(line: TypeLine) -> None:
                 "   Например, если вы хотите, чтобы бот вставил номер заявки, используйте плейсхолдер `{{number}}` в "
                 "желаемом месте документа.\n"
                 "3. После добавления всех необходимых плейсхолдеров, сохраните документ и выбрав в меню "
-                "`Распечатать по своему шаблону` загрузите его в чат.\n\n"
+                "`Сформировать отчет по своему шаблону` загрузите его в чат.\n\n"
                 "Список доступных плейсхолдеров:\n"
                 "{{number}} - номер заявки\n"
                 "{{created_at}} - дата и время создания заявки\n"
@@ -49,22 +49,22 @@ async def help_template(line: TypeLine) -> None:
         )
 
 
-@router.line(F.text == "Распечатать", Navigation.on_applications)
+@router.line(F.text == "Сформировать отчет", Navigation.on_applications)
 async def select_print_template(line: TypeLine, state: FSMContext) -> None:
     if line.user_id == line.author_id:
         await bot.send_message_line(
             line_id=line.line_id, user_id=line.user_id,
             text="Пожалуйста, выберите один из следующих вариантов:\n"
-                 "`Распечатать по своему шаблону` – вы можете загрузить и использовать свой индивидуальный документ в "
+                 "`Сформировать отчет по своему шаблону` – вы можете загрузить и использовать свой индивидуальный документ в "
                  "качестве шаблона для отчета. Подробные инструкции по подготовке вашего шаблона вы найдёте, введя "
                  "команду: ?help_template.\n"
-                 "`Распечатать по шаблону компании` – мы автоматически сгенерируем отчет о заявке, используя "
+                 "`Сформировать отчет по шаблону компании` – мы автоматически сгенерируем отчет о заявке, используя "
                  "стандартный шаблон компании. \n"
                  "Если вы хотите отменить эту операцию или вернуться в главное меню, пожалуйста, нажмите `Отмена`.",
             keyboard=[
                 [Button(text="Отмена")],
-                [Button(text="Распечатать по своему шаблону")],
-                [Button(text="Распечатать по шаблону компании")],
+                [Button(text="Сформировать отчет по своему шаблону")],
+                [Button(text="Сформировать отчет по шаблону компании")],
             ])
         await state.set_state(Navigation.on_select_print_template)
 
@@ -83,7 +83,7 @@ async def back_select_print(line: TypeLine, state: FSMContext) -> None:
         await select_print_template(line, state)
 
 
-@router.line(F.text == "Распечатать по своему шаблону", Navigation.on_select_print_template)
+@router.line(F.text == "Сформировать отчет по своему шаблону", Navigation.on_select_print_template)
 async def select_print_by_file_template(line: TypeLine, state: FSMContext) -> None:
     if line.user_id == line.author_id:
         await bot.send_message_line(
@@ -158,7 +158,7 @@ async def paste_in_template_from_ticket(template_path, save_path, state) -> None
     doc.save(save_path)
 
 
-@router.line(F.text == "Распечатать по шаблону компании", Navigation.on_select_print_template)
+@router.line(F.text == "Сформировать отчет по шаблону компании", Navigation.on_select_print_template)
 async def select_print_by_company_template(line: TypeLine, state: FSMContext) -> None:
     if line.user_id == line.author_id:
         print_template = (await state.get_data())['print_template']

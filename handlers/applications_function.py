@@ -111,7 +111,7 @@ async def do_create_application(line: TypeLine, state: FSMContext) -> None:
                                             text="По вашим данным зарегистрирована заявка, вы сможете видеть ход ее "
                                                  "рассмотрения в приложении. Кнопка “Понятно” = возврат в меню.",
                                             keyboard=[
-                                                [Button(text="Распечатать")],
+                                                [Button(text="Сформировать отчет")],
                                                 [Button(text="Понятно")],
                                             ])
                 await state.update_data(print_template={"where": 'create_info', 'ticket': ticket_send})
@@ -265,19 +265,19 @@ def dateformat(date: str) -> datetime:
     :param date: дата в формате '2024-02-21T14:54:28Z'
     :return: datetime
     """
+    # try:
+    #     # Пытаемся установить русскую локаль
+    #     locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')  # Для Linux
+    # except locale.Error:
     try:
-        # Пытаемся установить русскую локаль
-        locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')  # Для Linux
-    except locale.Error:
-        try:
-            # Вторая попытка, уже с учетом особенностей Windows
-            locale.setlocale(locale.LC_TIME, 'Russian')  # Для Windows
-        except locale.Error as e:
-            # Если и это не получается, выводим сообщение об ошибке.
-            # Программа будет использовать стандартную локаль,
-            # и может не корректно выводить названия месяцев на русском.
-            print(f"Ошибка установки локали: {e}")
-            locale.setlocale(locale.LC_TIME, 'C')
+        # Вторая попытка, уже с учетом особенностей Windows
+        locale.setlocale(locale.LC_TIME, 'Russian')  # Для Windows
+    except locale.Error as e:
+        # Если и это не получается, выводим сообщение об ошибке.
+        # Программа будет использовать стандартную локаль,
+        # и может не корректно выводить названия месяцев на русском.
+        print(f"Ошибка установки локали: {e}")
+        locale.setlocale(locale.LC_TIME, 'C')
     return datetime.datetime.fromisoformat(date.replace('Z', '+00:00')).strftime('%d %B %Y %H:%M:%S')
 
 
@@ -329,7 +329,7 @@ async def get_application_info(line: TypeLine, state: FSMContext) -> None:
                       f"Вид работ: {ticket['type']['name']}\n"
                       f"Результат: {ticket['result'] if 'result' in ticket else ''}\n"),
                 keyboard=[
-                    [Button(text="Повторить"), Button(text="Распечатать")],
+                    [Button(text="Повторить"), Button(text="Сформировать отчет")],
                     [Button(text="Понятно")],
                 ])
             await state.update_data(print_template={"where": 'get_info', 'ticket': ticket})
@@ -422,7 +422,7 @@ async def save_edit_application(line: TypeLine, state: FSMContext) -> None:
             await bot.send_message_line(line_id=line.line_id, user_id=line.user_id, text="Ошибка отправки сообщения\n")
     if response[0]['Value'] == "SUCCESS":
         await bot.send_message_line(line_id=line.line_id, user_id=line.user_id, text="Изменения в заявке сохранены\n",
-                                    keyboard=[[Button(text="Распечатать")], [Button(text="Понятно")]])
+                                    keyboard=[[Button(text="Сформировать отчет")], [Button(text="Понятно")]])
         await state.update_data(print_template={"where": 'edit_info', 'ticket': ticket, 'ticket_update': ticket_update})
         await state.set_state(Navigation.on_applications)
     else:
