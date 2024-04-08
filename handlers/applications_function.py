@@ -265,13 +265,15 @@ def dateformat(date: str) -> datetime:
     :param date: дата в формате '2024-02-21T14:54:28Z'
     :return: datetime
     """
-    # try:
-    #     # Пытаемся установить русскую локаль
-    #     locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')  # Для Linux
-    # except locale.Error:
+    is_linux = True
+
     try:
-        # Вторая попытка, уже с учетом особенностей Windows
-        locale.setlocale(locale.LC_TIME, 'Russian')  # Для Windows
+        if is_linux:
+            # Пытаемся установить русскую локаль
+            locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')  # Для Linux
+        else:
+            # Вторая попытка, уже с учетом особенностей Windows
+            locale.setlocale(locale.LC_TIME, 'Russian')  # Для Windows
     except locale.Error as e:
         # Если и это не получается, выводим сообщение об ошибке.
         # Программа будет использовать стандартную локаль,
