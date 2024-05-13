@@ -32,9 +32,12 @@ bot = Bot(
 
 
 async def on_startup():
-    from handlers.applications_function import set_application_info_lists
+    await bot.del_hook(id=LINE_ID, type=HookType.LINE)
+    await bot.del_hook(id=LINE_ID, type=HookType.BOT)
+
     await bot.set_hook(type=HookType.BOT, id=LINE_ID, url=BASE_WEBHOOK_URL + WEBHOOK_PATH + LINE_ID)
 
+    from handlers.applications_function import set_application_info_lists
     await set_application_info_lists()
 
 
